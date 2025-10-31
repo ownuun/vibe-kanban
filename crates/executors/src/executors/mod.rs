@@ -186,10 +186,19 @@ pub trait StandardCodingAgentExecutor {
     }
 }
 
+/// Result communicated through the exit signal
+#[derive(Debug, Clone, Copy)]
+pub enum ExecutorExitResult {
+    /// Process completed successfully (exit code 0)
+    Success,
+    /// Process should be marked as failed (non-zero exit)
+    Failure,
+}
+
 /// Optional exit notification from an executor.
 /// When this receiver resolves, the container should gracefully stop the process
-/// and mark it as successful (exit code 0).
-pub type ExecutorExitSignal = tokio::sync::oneshot::Receiver<()>;
+/// and mark it according to the result.
+pub type ExecutorExitSignal = tokio::sync::oneshot::Receiver<ExecutorExitResult>;
 
 #[derive(Debug)]
 pub struct SpawnedChild {

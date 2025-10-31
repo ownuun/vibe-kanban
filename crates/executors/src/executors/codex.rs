@@ -37,7 +37,8 @@ use crate::{
     approvals::ExecutorApprovalService,
     command::{CmdOverrides, CommandBuilder, CommandParts, apply_overrides},
     executors::{
-        AppendPrompt, ExecutorAction, ExecutorError, SpawnedChild, StandardCodingAgentExecutor,
+        AppendPrompt, ExecutorAction, ExecutorError, ExecutorExitResult, SpawnedChild,
+        StandardCodingAgentExecutor,
         codex::{jsonrpc::ExitSignalSender, normalize_logs::Error},
     },
     stdout_dup::create_stdout_pipe_writer,
@@ -335,6 +336,11 @@ impl Codex {
                             .log_raw(&Error::auth_required(message.clone()).raw())
                             .await
                             .ok();
+                        // Send failure signal so the process is marked as failed
+                        exit_signal_tx
+                            .send_exit_signal(ExecutorExitResult::Failure)
+                            .await;
+                        return;
                     }
                     _ => {
                         tracing::error!("Codex spawn error: {}", err);
@@ -344,7 +350,10 @@ impl Codex {
                             .ok();
                     }
                 }
-                exit_signal_tx.send_exit_signal().await;
+                // For other errors, also send failure signal
+                exit_signal_tx
+                    .send_exit_signal(ExecutorExitResult::Failure)
+                    .await;
             }
         });
 
@@ -372,7 +381,7 @@ impl Codex {
         client.connect(rpc_peer);
         client.initialize().await?;
         let auth_status = client.get_auth_status().await?;
-        if let None = auth_status.auth_method {
+        if auth_status.auth_method.is_none() {
             return Err(ExecutorError::AuthRequired(
                 "Codex authentication required".to_string(),
             ));
