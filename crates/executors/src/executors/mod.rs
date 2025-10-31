@@ -66,6 +66,8 @@ pub enum ExecutorError {
     ExecutableNotFound { program: String },
     #[error("Setup helper not supported")]
     SetupHelperNotSupported,
+    #[error("Auth required: {0}")]
+    AuthRequired(String),
 }
 
 #[enum_dispatch]
@@ -144,7 +146,10 @@ impl CodingAgent {
         match self {
             Self::ClaudeCode(_) => vec![BaseAgentCapability::SessionFork],
             Self::Amp(_) => vec![BaseAgentCapability::SessionFork],
-            Self::Codex(_) => vec![BaseAgentCapability::SessionFork],
+            Self::Codex(_) => vec![
+                BaseAgentCapability::SessionFork,
+                BaseAgentCapability::SetupHelper,
+            ],
             Self::Gemini(_) => vec![BaseAgentCapability::SessionFork],
             Self::QwenCode(_) => vec![BaseAgentCapability::SessionFork],
             Self::CursorAgent(_) => vec![BaseAgentCapability::SetupHelper],

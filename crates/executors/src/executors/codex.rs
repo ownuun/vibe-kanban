@@ -30,10 +30,14 @@ use self::{
     session::SessionHandler,
 };
 use crate::{
+    actions::{
+        ExecutorActionType,
+        script::{ScriptContext, ScriptRequest, ScriptRequestLanguage},
+    },
     approvals::ExecutorApprovalService,
     command::{CmdOverrides, CommandBuilder, CommandParts, apply_overrides},
     executors::{
-        AppendPrompt, ExecutorError, SpawnedChild, StandardCodingAgentExecutor,
+        AppendPrompt, ExecutorAction, ExecutorError, SpawnedChild, StandardCodingAgentExecutor,
         codex::{jsonrpc::ExitSignalSender, normalize_logs::Error},
     },
     stdout_dup::create_stdout_pipe_writer,
@@ -164,12 +168,31 @@ impl StandardCodingAgentExecutor for Codex {
     fn default_mcp_config_path(&self) -> Option<PathBuf> {
         dirs::home_dir().map(|home| home.join(".codex").join("config.toml"))
     }
+
+    async fn get_setup_helper_action(&self) -> Result<ExecutorAction, ExecutorError> {
+        let login_command = CommandBuilder::new(format!("{} login", self.base_command()));
+        let (program_path, args) = login_command.build_initial()?.into_resolved().await?;
+        let login_script = format!("{} {}", program_path.to_string_lossy(), args.join(" "));
+        let login_request = ScriptRequest {
+            script: login_script,
+            language: ScriptRequestLanguage::Bash,
+            context: ScriptContext::SetupScript,
+        };
+
+        Ok(ExecutorAction::new(
+            ExecutorActionType::ScriptRequest(login_request),
+            None,
+        ))
+    }
 }
 
 impl Codex {
-    fn build_command_builder(&self) -> CommandBuilder {
-        let mut builder = CommandBuilder::new("npx -y @openai/codex@0.46.0 app-server");
+    fn base_command(&self) -> String {
+        "npx -y @openai/codex@0.46.0".to_string()
+    }
 
+    fn build_command_builder(&self) -> CommandBuilder {
+        let mut builder = CommandBuilder::new(format!("{} app-server", self.base_command()));
         if self.oss.unwrap_or(false) {
             builder = builder.extend_params(["--oss"]);
         }
@@ -300,16 +323,27 @@ impl Codex {
             )
             .await
             {
-                if matches!(&err, ExecutorError::Io(io_err) if io_err.kind() == std::io::ErrorKind::BrokenPipe)
-                {
-                    // Broken pipe likely means the parent process exited, so we can ignore it
-                    return;
+                match &err {
+                    ExecutorError::Io(io_err)
+                        if io_err.kind() == std::io::ErrorKind::BrokenPipe =>
+                    {
+                        // Broken pipe likely means the parent process exited, so we can ignore it
+                        return;
+                    }
+                    ExecutorError::AuthRequired(message) => {
+                        log_writer
+                            .log_raw(&Error::auth_required(message.clone()).raw())
+                            .await
+                            .ok();
+                    }
+                    _ => {
+                        tracing::error!("Codex spawn error: {}", err);
+                        log_writer
+                            .log_raw(&Error::launch_error(err.to_string()).raw())
+                            .await
+                            .ok();
+                    }
                 }
-                tracing::error!("Codex spawn error: {}", err);
-                log_writer
-                    .log_raw(&Error::launch_error(err.to_string()).raw())
-                    .await
-                    .ok();
                 exit_signal_tx.send_exit_signal().await;
             }
         });
@@ -337,6 +371,12 @@ impl Codex {
             JsonRpcPeer::spawn(child_stdin, child_stdout, client.clone(), exit_signal_tx);
         client.connect(rpc_peer);
         client.initialize().await?;
+        let auth_status = client.get_auth_status().await?;
+        if let None = auth_status.auth_method {
+            return Err(ExecutorError::AuthRequired(
+                "Codex authentication required".to_string(),
+            ));
+        }
         match resume_session {
             None => {
                 let params = conversation_params;
