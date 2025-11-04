@@ -43,7 +43,7 @@ impl Executable for CodingAgentInitialRequest {
             ))?;
 
         agent.use_approvals(approvals.clone());
-        agent.use_vk_mcp_context(&vk_mcp_context);
+        agent.use_vk_mcp_context(vk_mcp_context);
 
         agent.spawn(current_dir, &self.prompt).await
     }

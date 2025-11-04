@@ -22,7 +22,8 @@ use strum_macros::AsRefStr;
 use tokio::process::Command;
 use ts_rs::TS;
 use workspace_utils::{
-    msg_store::MsgStore, shell::get_shell_command, vk_mcp_context::VkMcpContext,
+    msg_store::MsgStore,
+    vk_mcp_context::{VK_MCP_CONTEXT_ENV, VkMcpContext},
 };
 
 use self::{
@@ -276,7 +277,7 @@ impl Codex {
 
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
             process.env(
-                workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV,
+                VK_MCP_CONTEXT_ENV,
                 serde_json::to_string(vk_mcp_context).unwrap_or_default(),
             );
         }

@@ -19,7 +19,6 @@ use ts_rs::TS;
 use workspace_utils::{
     msg_store::MsgStore,
     path::make_path_relative,
-    shell::get_shell_command,
     vk_mcp_context::{VK_MCP_CONTEXT_ENV, VkMcpContext},
 };
 
@@ -109,7 +108,7 @@ pub struct Opencode {
     pub agent: Option<String>,
     #[serde(flatten)]
     pub cmd: CmdOverrides,
-    #[serde(skip, default)]
+    #[serde(skip)]
     #[ts(skip)]
     #[schemars(skip)]
     vk_mcp_context: Option<VkMcpContext>,
@@ -161,7 +160,7 @@ impl StandardCodingAgentExecutor for Opencode {
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
             command.env(
                 VK_MCP_CONTEXT_ENV,
-                serde_json::to_string(vk_mcp_context).unwrap(),
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
             );
         }
 
@@ -236,7 +235,7 @@ impl StandardCodingAgentExecutor for Opencode {
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
             command.env(
                 VK_MCP_CONTEXT_ENV,
-                serde_json::to_string(vk_mcp_context).unwrap(),
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
             );
         }
 

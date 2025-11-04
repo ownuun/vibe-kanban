@@ -15,7 +15,7 @@ use workspace_utils::{
     },
     msg_store::MsgStore,
     path::make_path_relative,
-    shell::{get_shell_command, resolve_executable_path},
+    shell::resolve_executable_path,
     vk_mcp_context::{VK_MCP_CONTEXT_ENV, VkMcpContext},
 };
 
@@ -46,6 +46,7 @@ pub struct CursorAgent {
     pub cmd: CmdOverrides,
     #[serde(skip)]
     #[ts(skip)]
+    #[schemars(skip)]
     vk_mcp_context: Option<VkMcpContext>,
 }
 
@@ -95,8 +96,10 @@ impl StandardCodingAgentExecutor for CursorAgent {
             .args(&args);
 
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
-            let json = serde_json::to_string(vk_mcp_context).unwrap();
-            command.env(VK_MCP_CONTEXT_ENV, json);
+            command.env(
+                VK_MCP_CONTEXT_ENV,
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
+            );
         }
 
         let mut child = command.group_spawn()?;
@@ -134,8 +137,10 @@ impl StandardCodingAgentExecutor for CursorAgent {
             .args(&args);
 
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
-            let json = serde_json::to_string(vk_mcp_context).unwrap();
-            command.env(workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV, json);
+            command.env(
+                VK_MCP_CONTEXT_ENV,
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
+            );
         }
 
         let mut child = command.group_spawn()?;

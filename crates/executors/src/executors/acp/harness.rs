@@ -67,16 +67,15 @@ impl AcpAgentHarness {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(current_dir)
-            .args(&args);
+            .args(&args)
+            .env("NODE_NO_WARNINGS", "1");
 
         if let Some(vk_mcp_context) = vk_mcp_context {
             command.env(
                 VK_MCP_CONTEXT_ENV,
-                serde_json::to_string(vk_mcp_context).unwrap(),
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
             );
         }
-
-        command.env("NODE_NO_WARNINGS", "1");
 
         let mut child = command.group_spawn()?;
 
@@ -119,7 +118,7 @@ impl AcpAgentHarness {
         if let Some(vk_mcp_context) = vk_mcp_context {
             command.env(
                 VK_MCP_CONTEXT_ENV,
-                serde_json::to_string(vk_mcp_context).unwrap(),
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
             );
         }
 

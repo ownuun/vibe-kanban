@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use tokio::{io::AsyncWriteExt, process::Command};
 use ts_rs::TS;
 use workspace_utils::{
-    msg_store::MsgStore, shell::get_shell_command, vk_mcp_context::VkMcpContext,
+    msg_store::MsgStore,
+    vk_mcp_context::{VK_MCP_CONTEXT_ENV, VkMcpContext},
 };
 
 use crate::{
@@ -69,8 +70,10 @@ impl StandardCodingAgentExecutor for Amp {
             .args(&args);
 
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
-            let json = serde_json::to_string(vk_mcp_context).unwrap();
-            command.env(workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV, json);
+            command.env(
+                VK_MCP_CONTEXT_ENV,
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
+            );
         }
 
         let mut child = command.group_spawn()?;
@@ -104,10 +107,6 @@ impl StandardCodingAgentExecutor for Amp {
             .stderr(Stdio::piped())
             .current_dir(current_dir)
             .args(&fork_args)
-            .env(
-                workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV,
-                serde_json::to_string(&self.vk_mcp_context).unwrap_or_default(),
-            )
             .output()
             .await?;
         let stdout_str = String::from_utf8_lossy(&fork_output.stdout);
@@ -146,8 +145,10 @@ impl StandardCodingAgentExecutor for Amp {
             .args(&continue_args);
 
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
-            let json = serde_json::to_string(vk_mcp_context).unwrap();
-            command.env(workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV, json);
+            command.env(
+                VK_MCP_CONTEXT_ENV,
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
+            );
         }
 
         let mut child = command.group_spawn()?;

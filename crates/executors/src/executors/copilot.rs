@@ -21,7 +21,6 @@ use uuid::Uuid;
 use workspace_utils::{
     msg_store::MsgStore,
     path::get_vibe_kanban_temp_dir,
-    shell::get_shell_command,
     vk_mcp_context::{VK_MCP_CONTEXT_ENV, VkMcpContext},
 };
 
@@ -128,7 +127,7 @@ impl StandardCodingAgentExecutor for Copilot {
 
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
             command.env(
-                workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV,
+                VK_MCP_CONTEXT_ENV,
                 serde_json::to_string(vk_mcp_context).unwrap_or_default(),
             );
         }
@@ -174,7 +173,7 @@ impl StandardCodingAgentExecutor for Copilot {
 
         if let Some(vk_mcp_context) = &self.vk_mcp_context {
             command.env(
-                workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV,
+                VK_MCP_CONTEXT_ENV,
                 serde_json::to_string(vk_mcp_context).unwrap_or_default(),
             );
         }
