@@ -32,12 +32,14 @@ pub struct ScriptRequest {
     pub context: ScriptContext,
 }
 
+use workspace_utils::vk_mcp_context::VkMcpContext;
 #[async_trait]
 impl Executable for ScriptRequest {
     async fn spawn(
         &self,
         current_dir: &Path,
         _approvals: Arc<dyn ExecutorApprovalService>,
+        _vk_mcp_context: &VkMcpContext,
     ) -> Result<SpawnedChild, ExecutorError> {
         let (shell_cmd, shell_arg) = get_shell_command();
         let mut command = Command::new(shell_cmd);

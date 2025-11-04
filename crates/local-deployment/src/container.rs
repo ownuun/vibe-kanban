@@ -819,9 +819,14 @@ impl ContainerService for LocalContainerService {
                 _ => Arc::new(NoopExecutorApprovalService {}),
             };
 
+        let execution_ctx =
+            ExecutionProcess::load_context(&self.db.pool, execution_process.id).await?;
+
+        let vk_context = execution_ctx.to_vk_mcp_context();
+
         // Create the child and stream, add to execution tracker
         let mut spawned = executor_action
-            .spawn(&current_dir, approvals_service)
+            .spawn(&current_dir, approvals_service, &vk_context)
             .await?;
 
         self.track_child_msgs_in_store(execution_process.id, &mut spawned.child)

@@ -18,7 +18,12 @@ use tokio::{
 };
 use ts_rs::TS;
 use uuid::Uuid;
-use workspace_utils::{msg_store::MsgStore, path::get_vibe_kanban_temp_dir};
+use workspace_utils::{
+    msg_store::MsgStore,
+    path::get_vibe_kanban_temp_dir,
+    shell::get_shell_command,
+    vk_mcp_context::{VK_MCP_CONTEXT_ENV, VkMcpContext},
+};
 
 use crate::{
     command::{CmdOverrides, CommandBuilder, apply_overrides},
@@ -48,6 +53,10 @@ pub struct Copilot {
     pub disable_mcp_server: Option<Vec<String>>,
     #[serde(flatten)]
     pub cmd: CmdOverrides,
+    #[serde(skip)]
+    #[ts(skip)]
+    #[schemars(skip)]
+    vk_mcp_context: Option<VkMcpContext>,
 }
 
 impl Copilot {
@@ -94,6 +103,10 @@ impl Copilot {
 
 #[async_trait]
 impl StandardCodingAgentExecutor for Copilot {
+    fn use_vk_mcp_context(&mut self, vk_mcp_context: &VkMcpContext) {
+        self.vk_mcp_context = Some(vk_mcp_context.clone());
+    }
+
     async fn spawn(&self, current_dir: &Path, prompt: &str) -> Result<SpawnedChild, ExecutorError> {
         let log_dir = Self::create_temp_log_dir(current_dir).await?;
         let command_parts = self
@@ -112,6 +125,13 @@ impl StandardCodingAgentExecutor for Copilot {
             .current_dir(current_dir)
             .args(&args)
             .env("NODE_NO_WARNINGS", "1");
+
+        if let Some(vk_mcp_context) = &self.vk_mcp_context {
+            command.env(
+                workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV,
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
+            );
+        }
 
         let mut child = command.group_spawn()?;
 
@@ -151,6 +171,13 @@ impl StandardCodingAgentExecutor for Copilot {
             .current_dir(current_dir)
             .args(&args)
             .env("NODE_NO_WARNINGS", "1");
+
+        if let Some(vk_mcp_context) = &self.vk_mcp_context {
+            command.env(
+                workspace_utils::vk_mcp_context::VK_MCP_CONTEXT_ENV,
+                serde_json::to_string(vk_mcp_context).unwrap_or_default(),
+            );
+        }
 
         let mut child = command.group_spawn()?;
 
