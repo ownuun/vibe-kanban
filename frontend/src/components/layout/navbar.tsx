@@ -38,7 +38,7 @@ const EXTERNAL_LINKS = [
   {
     label: 'Support',
     icon: MessageCircleQuestion,
-    href: 'https://github.com/BloopAI/vibe-kanban/issues',
+    href: 'https://github.com/ANYON-team/anyon/issues',
   },
   {
     label: 'Discord',

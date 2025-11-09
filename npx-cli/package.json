@@ -1,15 +1,17 @@
 {
-  "name": "vibe-kanban",
+  "name": "anyon-slit", 
   "private": false,
   "version": "0.0.116",
   "main": "index.js",
   "bin": {
-    "vibe-kanban": "bin/cli.js"
+    "anyon-slit": "bin/cli.js", 
+    "anyon": "bin/cli.js"  
   },
-  "keywords": [],
+  "keywords": ["kanban", "task-management", "ai",
+"productivity"],  
   "author": "bloop",
-  "license": "",
-  "description": "NPX wrapper around vibe-kanban and vibe-kanban-mcp",
+  "license": "MIT", 
+  "description": "AI-powered task management system",      
   "dependencies": {
     "adm-zip": "^0.5.16"
   },

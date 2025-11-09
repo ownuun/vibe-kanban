@@ -1,9 +1,9 @@
 {
-  "vibe_kanban": {
+  "anyon": {
     "command": "npx",
     "args": [
       "-y",
-      "vibe-kanban@latest",
+      "anyon@latest",
       "--mcp"
     ]
   },
@@ -21,9 +21,9 @@
     ]
   },
   "meta": {
-    "vibe_kanban": {
-      "name": "Vibe Kanban",
-      "description": "Create, update and delete Vibe Kanban tasks",
+    "anyon": {
+      "name": "ANYON",
+      "description": "Create, update and delete ANYON tasks",
       "url": "https://www.vibekanban.com/docs/integrations/vibe-kanban-mcp-server",
       "icon": "favicon-vk-light.svg"
     },
